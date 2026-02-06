@@ -230,7 +230,7 @@
   <div class="summary-grid">
   <div class="summary-item">
     <div class="label">총 Step 수</div>
-    <div class="value">42</div>
+    <div class="value" id="summaryTotalSteps"></div>
   </div>
 
   <div class="summary-item success">
@@ -261,9 +261,14 @@
   <div class="card">
     <div class="badge-fail">❌ QA 실패</div>
     <div class="summary">
-      <strong>실패 시나리오:</strong> HW-003 · 과제 생성 시 입력값 검증<br />
+      <strong>실패 시나리오:</strong> <span id="failScenarioName"></span><br />
       <strong>실패 단계:</strong> 입력값 검증 및 오류 메시지 확인<br />
       <strong>실패 유형:</strong> 기대한 오류 메시지 미노출
+
+      <script>
+document.getElementById("failScenarioName").textContent =
+  localStorage.getItem("scenarioFileName") || "시나리오 정보 없음";
+</script>
     </div>
   </div>
 
@@ -314,20 +319,26 @@
 
 <script>
   function createJiraIssue() {
-    // 👉 이후 Jira API 연동 지점
-    alert(
-      "Jira 이슈가 생성되었습니다.\n\n" +
-      "• 시나리오: HW-003\n" +
-      "• 실패 단계: 입력값 검증\n" +
-      "• 유형: 오류 메시지 미노출"
-    );
-  }
+  const scenarioName =
+    sessionStorage.getItem("scenarioName") || "시나리오 정보 없음";
+
+  alert(`
+Jira 이슈가 생성되었습니다.
+
+• 시나리오: ${scenarioName}
+• 실패 단계: 입력값 검증
+• 유형: 오류 메시지 미노출
+`);
+}
 
   function downloadReport() {
-    const report = `
+  const scenarioName =
+    sessionStorage.getItem("scenarioName") || "시나리오 정보 없음";
+
+  const report = `
 [AI QA 실행 결과 리포트]
 
-시나리오: HW-003 · 과제 생성 시 입력값 검증
+시나리오: ${scenarioName}
 결과: 실패
 
 실패 단계:
@@ -344,16 +355,19 @@ AI 개선 가이드:
 - 검증 위치(프론트/백엔드) 구분 권장
 `;
 
-    const blob = new Blob([report], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+  const blob = new Blob([report], { type: "text/plain;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "AI_QA_실패_리포트.txt";
-    a.click();
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "AI_QA_실패_리포트.txt";
+  a.click();
 
-    URL.revokeObjectURL(url);
-  }
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("summaryTotalSteps").textContent =
+  localStorage.getItem("totalStepCount") || "-";
 </script>
 </body>
 </html>
