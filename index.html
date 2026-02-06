@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>AI QA Platform – QA 시나리오 업로드</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -468,7 +469,7 @@
       AI가 인식한 전체 실행 단계 수입니다.
     </span>
   </h3>
-  <p>42개</p>
+  <p id="totalStepCount">-</p>
 </div>
 
       <div class="summary-card">
@@ -766,32 +767,88 @@
   });
 
   function handleFileUpload(file) {
-    // 초기화
-    resultSection.style.display = "none";
-    validationCard.style.display = "none";
-    aiCard.style.display = "none";
+  // 초기화
+  resultSection.style.display = "none";
+  validationCard.style.display = "none";
+  aiCard.style.display = "none";
 
-    uploadBox.querySelector("strong").innerText = "업로드 중입니다...";
-    uploadBox.querySelector("span").innerText = "AI가 시나리오를 분석하고 있어요";
+  uploadBox.querySelector("strong").innerText = "업로드 중입니다...";
+  uploadBox.querySelector("span").innerText = "AI가 시나리오를 분석하고 있어요";
 
-    setTimeout(() => {
-      uploadBox.querySelector("strong").innerText = "업로드 완료";
-      uploadBox.querySelector("span").innerText = file.name;
+  const reader = new FileReader();
 
-      resultSection.style.display = "grid";
-      aiCard.style.display = "block";
+  reader.onload = function (e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
 
-      // 더미 검증
-      const isInvalid =
-        file.name.toLowerCase().includes("bad") ||
-        file.name.toLowerCase().includes("fail") ||
-        file.name.toLowerCase().includes("error");
+    // 첫 번째 시트 사용
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
 
-      if (isInvalid) {
-        validationCard.style.display = "block";
-      }
-    }, 1200);
+    // JSON 변환 (A6부터)
+const rows = XLSX.utils.sheet_to_json(worksheet, {
+  range: 5,
+  defval: ""
+});
+
+window.__debugRows = rows;
+
+// rows 방어 처리
+if (!rows.length) {
+  document.getElementById("totalStepCount").innerText = "0개";
+  return;
+}
+
+// ✅ [순서] 컬럼 키 찾기
+const orderKey = Object.keys(rows[0]).find(key =>
+  key.replace(/\s/g, "") === "순서"
+);
+
+if (!orderKey) {
+  console.warn("순서 컬럼을 찾지 못했습니다.", rows[0]);
+  document.getElementById("totalStepCount").innerText = "0개";
+  return;
+}
+
+// Step 수 계산
+const stepSet = new Set();
+
+rows.forEach(row => {
+  const value = Number(row[orderKey]);
+  if (Number.isInteger(value)) {
+    stepSet.add(value);
   }
+});
+
+const stepCount = stepSet.size;
+
+// ✅ 페이지 간 공유 데이터 저장
+localStorage.setItem("scenarioFileName", file.name);
+localStorage.setItem("totalStepCount", stepCount);
+
+// UI 반영
+document.getElementById("totalStepCount").innerText = `${stepCount}개`;
+
+    // 업로드 완료 UI
+    uploadBox.querySelector("strong").innerText = "업로드 완료";
+    uploadBox.querySelector("span").innerText = file.name;
+
+    resultSection.style.display = "grid";
+    aiCard.style.display = "block";
+
+    // 더미 검증 로직 유지
+    const isInvalid =
+      file.name.toLowerCase().includes("bad") ||
+      file.name.toLowerCase().includes("fail") ||
+      file.name.toLowerCase().includes("error");
+
+    if (isInvalid) {
+      validationCard.style.display = "block";
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
 
   /* =========================
      4. STEP 2 이동
@@ -799,12 +856,21 @@
   const runBtn = document.getElementById("runAiQaBtn");
 
   runBtn.addEventListener("click", () => {
-    if (!fileInput.files || fileInput.files.length === 0) {
-      alert("파일을 업로드해주세요.");
-      return;
-    }
-    window.location.href = "ai_run.html";
-  });
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("파일을 업로드해주세요.");
+    return;
+  }
+
+  // ✅ 여기서 반드시 저장
+  sessionStorage.setItem("scenarioName", file.name);
+
+  // (선택) 나중에 확장용
+  sessionStorage.setItem("runStartedAt", Date.now());
+
+  window.location.href = "ai_run.html";
+});
 
   /* =========================
    Step 카드 토글
