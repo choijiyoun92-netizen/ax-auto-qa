@@ -218,7 +218,7 @@
     <div class="card">
       <div class="scenario">
         현재 실행 중인 시나리오
-        <strong>HW-003 · 과제 생성 시 입력값 검증</strong>
+        <strong id="scenarioTitle"></strong>
       </div>
     </div>
 
@@ -226,9 +226,6 @@
     <div class="card">
       <h2 style="font-size:16px; margin-bottom:12px;">AI 실행 로그</h2>
       <div class="log" id="logArea">
-        <p><span>10:21:04</span>시나리오 해석을 시작했습니다.</p>
-        <p><span>10:21:08</span>테스트 단계 3개를 확인했습니다.</p>
-        <p><span>10:21:12</span>브라우저 환경을 초기화했습니다.</p>
       </div>
     </div>
 
@@ -237,7 +234,7 @@
     실행 결과 요약
   </h2>
   <ul style="font-size:14px; line-height:1.6;">
-    <li>총 Step 수: 42</li>
+    <li>총 Step 수: <span id="resultTotalSteps"></span></li>
     <li>성공: 35</li>
     <li>오류(진행 가능): 5</li>
     <li style="color:#b91c1c; font-weight:600;">
@@ -249,6 +246,37 @@
     <div class="footer-msg">
       실행 중에는 설정을 변경할 수 없습니다.
     </div>
+
+    <div
+  id="failCountdown"
+  style="
+    display:none;
+    margin-top:16px;
+    text-align:center;
+    font-size:14px;
+    color:#b91c1c;
+    font-weight:600;
+  "
+></div>
+
+  <div id="resultActions"
+     style="display:none; margin-top:24px; text-align:right;">
+
+  <button
+    style="
+      padding:10px 16px;
+      border-radius:8px;
+      border:none;
+      background:#dc2626;
+      color:#ffffff;
+      font-size:14px;
+      cursor:pointer;
+    "
+    onclick="location.href='ai-fail-result.html'">
+    QA 실패 결과 보기
+  </button>
+
+</div>
   </main>
 
 <script>
@@ -262,6 +290,9 @@ const steps = [
   {
     name: "제목 입력 검증",
     logs: [
+      { text: "시나리오 해석을 시작했습니다.", type: "normal" },
+      { text: "테스트 단계 3개를 확인했습니다.", type: "normal" },
+      { text: "브라우저 환경을 초기화했습니다.", type: "normal" },
       { text: "과제 생성 버튼 클릭", type: "normal" },
       { text: "제목 입력 필드 접근", type: "normal" },
       { text: "빈 값 입력 시도", type: "normal" },
@@ -288,8 +319,24 @@ const steps = [
 
 function appendLog(text, type, detail) {
   const time = new Date().toLocaleTimeString("ko-KR", { hour12: false });
-  const p = document.createElement("p");
 
+  // 🔹 1. 실행 로그 객체
+  const logItem = {
+    time,
+    text,
+    type,
+    detail
+  };
+
+  // 🔹 2. 기존 로그 불러오기
+  const logs = JSON.parse(sessionStorage.getItem("aiRunLogs") || "[]");
+
+  // 🔹 3. 로그 저장
+  logs.push(logItem);
+  sessionStorage.setItem("aiRunLogs", JSON.stringify(logs));
+
+  // 🔹 4. 화면 출력 (기존 로직)
+  const p = document.createElement("p");
   p.innerHTML = `<span>${time}</span>${text}`;
 
   if (type === "warning" || type === "fail") {
@@ -301,8 +348,7 @@ function appendLog(text, type, detail) {
       btn.textContent = "상세보기";
       btn.style.marginLeft = "8px";
       btn.style.fontSize = "12px";
-
-      btn.onclick = () => alert(detail); // 나중에 모달로 교체 가능
+      btn.onclick = () => alert(detail);
       p.appendChild(btn);
     }
   }
@@ -311,13 +357,25 @@ function appendLog(text, type, detail) {
   logArea.scrollTop = logArea.scrollHeight;
 }
 
+
 let stepIndex = 0;
 let logIndex = 0;
 
 if (mode === "result") {
+  // STEP UI
   document.getElementById("step-parse").className = "step done";
   document.getElementById("step-run").className = "step done";
   document.getElementById("step-result").className = "step active";
+
+  // 제목 / 설명
+  document.getElementById("pageTitle").textContent = "AI QA 실행 결과";
+  document.getElementById("pageDesc").style.display = "none";
+
+  // 결과 요약 노출
+  document.getElementById("resultSummary").style.display = "block";
+
+  // 🔥 핵심: 실행 중 로그 전체 다시 그리기
+  renderResultLogs();
 }
 
 let interval = null;
@@ -325,9 +383,19 @@ let interval = null;
 if (mode !== "result") {
   interval = setInterval(() => {
   if (stepIndex >= steps.length) {
-    clearInterval(interval);
-    return;
-  }
+  clearInterval(interval);
+
+  // 🔹 STEP UI 전환
+  document.querySelectorAll(".step").forEach(el =>
+    el.classList.remove("active")
+  );
+  document.querySelectorAll(".step")[2].classList.add("active"); // ③ 결과 판단
+
+  // 🔹 로그 재사용
+  renderResultLogs();
+
+  return;
+}
 
   const step = steps[stepIndex];
   const log = step.logs[logIndex];
@@ -336,12 +404,29 @@ if (mode !== "result") {
 
   // ❌ 치명적 오류 → 종료
   if (log.type === "fail" && log.canContinue === false) {
-    clearInterval(interval);
-    setTimeout(() => {
+  clearInterval(interval);
+
+  const countdownEl = document.getElementById("failCountdown");
+  let seconds = 3;
+
+  countdownEl.style.display = "block";
+  countdownEl.textContent =
+    `⚠ QA 실행이 중단되었습니다. ${seconds}초 후 실행 결과 화면으로 이동합니다.`;
+
+  const countdownTimer = setInterval(() => {
+    seconds--;
+
+    if (seconds <= 0) {
+      clearInterval(countdownTimer);
       window.location.href = "ai-fail-result.html";
-    }, 3000);
-    return;
-  }
+    } else {
+      countdownEl.textContent =
+        `⚠ QA 실행이 중단되었습니다. ${seconds}초 후 실행 결과 화면으로 이동합니다.`;
+    }
+  }, 1000);
+
+  return;
+}
 
   logIndex++;
 
@@ -356,11 +441,59 @@ if (mode !== "result") {
 if (mode === "result") {
   document.getElementById("pageTitle").textContent = "AI QA 실행 결과";
   document.getElementById("pageDesc").style.display = "none";
-  document.getElementById("footerMsg").style.display = "none";
+  document.querySelector(".footer-msg").style.display = "none";
+
+    // ✅ 결과 페이지 이동 버튼 노출
+  document.getElementById("resultActions").style.display = "block";
+
+    // ✅ 추가해야 하는 핵심 코드
+  renderResultLogs();
 }
 
 if (mode === "result") {
   document.getElementById("resultSummary").style.display = "block";
+}
+
+function renderResultLogs() {
+  const logs = JSON.parse(sessionStorage.getItem("aiRunLogs") || "[]");
+  logArea.innerHTML = ""; // 기존 로그 초기화
+
+  logs.forEach(log => {
+    const p = document.createElement("p");
+    p.innerHTML = `<span>${log.time}</span>${log.text}`;
+
+    if (log.type === "warning" || log.type === "fail") {
+      p.style.fontWeight = "600";
+      p.style.color = log.type === "fail" ? "#dc2626" : "#d97706";
+
+      if (log.detail) {
+        const btn = document.createElement("button");
+        btn.textContent = "상세보기";
+        btn.style.marginLeft = "8px";
+        btn.style.fontSize = "12px";
+        btn.onclick = () => alert(log.detail);
+        p.appendChild(btn);
+      }
+    }
+
+    logArea.appendChild(p);
+  });
+}
+
+const scenarioTitleEl = document.getElementById("scenarioTitle");
+
+const scenarioName = localStorage.getItem("scenarioFileName");
+const totalStepCount = localStorage.getItem("totalStepCount");
+
+scenarioTitleEl.textContent =
+  scenarioName
+    ? `${scenarioName} (${totalStepCount} Steps)`
+    : "시나리오 정보 없음";
+
+const resultTotalStepsEl = document.getElementById("resultTotalSteps");
+if (resultTotalStepsEl) {
+  resultTotalStepsEl.textContent =
+    localStorage.getItem("totalStepCount");
 }
 </script>
 
