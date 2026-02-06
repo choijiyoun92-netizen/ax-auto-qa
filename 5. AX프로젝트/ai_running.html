@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI QA Platform – AI QA 실행 중</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #222;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    header span {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .page-desc {
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+    /* 진행 상태 */
+    .steps {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+    }
+
+    .step {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f3f4f6;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .step.active {
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .step.done {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    /* 로그 */
+    .log {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .log p {
+      margin: 0 0 8px 0;
+    }
+
+    .log span {
+      color: #6b7280;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+
+    /* 현재 시나리오 */
+    .scenario {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .scenario strong {
+      display: block;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    /* 하단 */
+    .footer-msg {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    /* 실행 중단 버튼 */
+    .back-btn {
+      font-size: 14px;
+      text-decoration: none;
+      margin-right: 16px;
+    }
+
+    .back-btn.warning {
+      color: #c2410c;
+    }
+
+    .back-btn.warning:hover {
+      text-decoration: underline;
+    }
+
+        /* STEP 진행 바 */
+    .step-bar {
+      max-width: 960px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .step-item {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 13px;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .step-item a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .step-item.done {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .step-item.active {
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>AI QA Platform</h1>
+    <span>STEP 3 · AI QA 실행 중</span>
+  </header>
+
+  <div class="step-bar">
+  <div class="step-item done">
+    <a href="index.html">① 시나리오 업로드</a>
+  </div>
+  <div class="step-item done">
+    <a href="ai_run.html">② AI QA 실행</a>
+  </div>
+  <div class="step-item active">
+    ③ 실행 중
+  </div>
+  </div>
+
+  <main>
+    <div class="page-title" id="pageTitle">AI QA 실행 중</div>
+
+<div class="page-desc" id="pageDesc">
+  AI가 테스트 시나리오를 해석하고 실제 QA를 수행하고 있습니다.<br />
+  이 작업은 몇 분 정도 소요될 수 있습니다.
+</div>
+
+    <!-- 전체 진행 상태 -->
+    <div class="card">
+      <div class="steps">
+      <div class="step done" id="step-parse">① 시나리오 해석</div>
+      <div class="step active" id="step-run">② 테스트 실행</div>
+      <div class="step" id="step-result">③ 결과 판단</div>
+      </div>
+    </div>
+
+    <!-- 현재 시나리오 -->
+    <div class="card">
+      <div class="scenario">
+        현재 실행 중인 시나리오
+        <strong>HW-003 · 과제 생성 시 입력값 검증</strong>
+      </div>
+    </div>
+
+    <!-- 실행 로그 -->
+    <div class="card">
+      <h2 style="font-size:16px; margin-bottom:12px;">AI 실행 로그</h2>
+      <div class="log" id="logArea">
+        <p><span>10:21:04</span>시나리오 해석을 시작했습니다.</p>
+        <p><span>10:21:08</span>테스트 단계 3개를 확인했습니다.</p>
+        <p><span>10:21:12</span>브라우저 환경을 초기화했습니다.</p>
+      </div>
+    </div>
+
+    <div class="card" id="resultSummary" style="display:none;">
+  <h2 style="font-size:16px; margin-bottom:12px;">
+    실행 결과 요약
+  </h2>
+  <ul style="font-size:14px; line-height:1.6;">
+    <li>총 Step 수: 42</li>
+    <li>성공: 35</li>
+    <li>오류(진행 가능): 5</li>
+    <li style="color:#b91c1c; font-weight:600;">
+      실패(중단): 1
+    </li>
+  </ul>
+</div>
+
+    <div class="footer-msg">
+      실행 중에는 설정을 변경할 수 없습니다.
+    </div>
+  </main>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode"); // null | "result"
+
+const logArea = document.getElementById("logArea");
+
+/* ✅ STEP + 로그 구조 */
+const steps = [
+  {
+    name: "제목 입력 검증",
+    logs: [
+      { text: "과제 생성 버튼 클릭", type: "normal" },
+      { text: "제목 입력 필드 접근", type: "normal" },
+      { text: "빈 값 입력 시도", type: "normal" },
+      {
+        text: "에러 메시지 미노출",
+        type: "warning",
+        detail: "빈 값 입력 시 에러 메시지가 노출되어야 하나 확인되지 않음",
+        canContinue: true
+      }
+    ]
+  },
+  {
+    name: "저장 버튼 검증",
+    logs: [
+      {
+        text: "저장 버튼 클릭 실패",
+        type: "fail",
+        detail: "필수 값 누락으로 저장 API 호출 불가",
+        canContinue: false
+      }
+    ]
+  }
+];
+
+function appendLog(text, type, detail) {
+  const time = new Date().toLocaleTimeString("ko-KR", { hour12: false });
+  const p = document.createElement("p");
+
+  p.innerHTML = `<span>${time}</span>${text}`;
+
+  if (type === "warning" || type === "fail") {
+    p.style.fontWeight = "600";
+    p.style.color = type === "fail" ? "#dc2626" : "#d97706";
+
+    if (detail) {
+      const btn = document.createElement("button");
+      btn.textContent = "상세보기";
+      btn.style.marginLeft = "8px";
+      btn.style.fontSize = "12px";
+
+      btn.onclick = () => alert(detail); // 나중에 모달로 교체 가능
+      p.appendChild(btn);
+    }
+  }
+
+  logArea.appendChild(p);
+  logArea.scrollTop = logArea.scrollHeight;
+}
+
+let stepIndex = 0;
+let logIndex = 0;
+
+if (mode === "result") {
+  document.getElementById("step-parse").className = "step done";
+  document.getElementById("step-run").className = "step done";
+  document.getElementById("step-result").className = "step active";
+}
+
+let interval = null;
+
+if (mode !== "result") {
+  interval = setInterval(() => {
+  if (stepIndex >= steps.length) {
+    clearInterval(interval);
+    return;
+  }
+
+  const step = steps[stepIndex];
+  const log = step.logs[logIndex];
+
+  appendLog(log.text, log.type, log.detail);
+
+  // ❌ 치명적 오류 → 종료
+  if (log.type === "fail" && log.canContinue === false) {
+    clearInterval(interval);
+    setTimeout(() => {
+      window.location.href = "ai-fail-result.html";
+    }, 3000);
+    return;
+  }
+
+  logIndex++;
+
+  // 현재 step 끝 → 다음 step
+  if (logIndex >= step.logs.length) {
+    stepIndex++;
+    logIndex = 0;
+  }
+}, 1500);
+}
+
+if (mode === "result") {
+  document.getElementById("pageTitle").textContent = "AI QA 실행 결과";
+  document.getElementById("pageDesc").style.display = "none";
+  document.getElementById("footerMsg").style.display = "none";
+}
+
+if (mode === "result") {
+  document.getElementById("resultSummary").style.display = "block";
+}
+</script>
+
+</body>
+</html>
