@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 테스트 결과 - 성공</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f9fc;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .success-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .desc {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .info-box {
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .btn-group button {
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="success-icon">✅</div>
+
+  <div class="title">AI 테스트가 성공적으로 완료되었습니다</div>
+  <div class="desc" id="resultDesc">모든 시나리오가 정상 통과되었습니다.</div>
+
+  <div class="info-box">
+    <p><strong>시나리오명:</strong> <span id="scenarioName"></span></p>
+    <p><strong>총 Step 수:</strong> <span id="stepCount"></span>개</p>
+    <p><strong>실행 결과:</strong> <span id="resultStatus">PASS</span></p>
+  </div>
+
+  <div class="btn-group">
+    <div style="margin-top:24px; text-align:right;">
+  <button
+    style="
+      padding:10px 16px;
+      border-radius:8px;
+      border:none;
+      background:#2563eb;
+      color:#ffffff;
+      font-size:14px;
+      cursor:pointer;
+    "
+    onclick="location.href='ai_running.html?mode=result'">
+    QA 실행 상세 이력 보기
+  </button>
+</div>
+    <button class="btn-primary" onclick="downloadReport()">리포트 다운로드</button>
+    <button class="btn-secondary" onclick="goHome()">처음으로</button>
+  </div>
+</div>
+
+<script>
+  const scenarioName = localStorage.getItem("scenarioFileName") || "시나리오";
+  const stepCount = localStorage.getItem("totalStepCount") || 0;
+  const resultType = sessionStorage.getItem("lastResultType") || "success";
+
+  const logs = JSON.parse(sessionStorage.getItem("aiRunLogs") || "[]");
+  const warningCount = logs.filter(log => log.type === "warning").length;
+
+  document.getElementById("scenarioName").innerText = scenarioName;
+  document.getElementById("stepCount").innerText = stepCount;
+
+  const descEl = document.getElementById("resultDesc");
+  const statusEl = document.getElementById("resultStatus");
+
+  // 🔥 경고 케이스
+  if (resultType === "warning") {
+
+    document.querySelector(".success-icon").innerText = "⚠";
+    document.querySelector(".title").innerText =
+      "AI 테스트가 완료되었습니다 (경고 발생)";
+
+    descEl.innerHTML =
+      `${warningCount}개의 오류를 제외하고 모든 시나리오가 실행되었습니다.`;
+
+    statusEl.innerText = "WARNING";
+    statusEl.style.color = "#b45309";
+
+    document.querySelector(".container").style.borderTop =
+      "6px solid #f59e0b";
+  }
+
+  // ✅ 성공 케이스
+  else {
+
+    descEl.innerHTML =
+      "모든 시나리오가 정상 통과되었습니다.";
+
+    statusEl.innerText = "PASS";
+    statusEl.style.color = "#047857";
+
+    document.querySelector(".container").style.borderTop =
+      "6px solid #10b981";
+  }
+
+  function downloadReport() {
+    alert("성공 리포트 다운로드 (구현 가능)");
+  }
+
+  function goHome() {
+    window.location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>
