@@ -422,6 +422,73 @@
   font-size: 12px;
   color: #b45309;
 }
+
+/* 좌우 레이아웃 */
+.run-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.run-main {
+  flex: 1;
+}
+
+.run-side {
+  width: 260px;
+  flex-shrink: 0;
+}
+
+/* 프로토타입 카드 */
+.demo-card {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.demo-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.demo-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.demo-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.demo-file-box {
+  font-size: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  color: #334155;
+}
+
+.demo-file-box span {
+  display: block;
+  margin-top: 4px;
+  font-family: monospace;
+  color: #2563eb;
+}
   </style>
 </head>
 
@@ -445,6 +512,11 @@
   </div>
 
   <main>
+    <div class="run-layout">
+
+    <!-- 왼쪽: 기존 업로드 UI -->
+    <div class="run-main">
+      <!-- 👇 기존 시나리오 업로드 카드들 전체 그대로 유지 -->
     <div class="page-title">QA 시나리오 업로드</div>
     <div class="page-desc">
       기존에 사용하던 엑셀 테스트 시나리오를 업로드하면,<br />
@@ -701,6 +773,30 @@
       <span>※ AI 검토 필요 Step이 있어도 AI QA 실행은 가능합니다.</span>
          <button id="runAiQaBtn">AI QA 실행하기 →</button>
     </div>
+
+    <!-- 오른쪽: 프로토타입 박스 -->
+    <div class="run-side">
+
+    <!-- 여기에 demo-card 추가 -->
+    <div class="demo-card">
+  <div class="demo-badge">PROTOTYPE</div>
+
+  <div class="demo-title">(임시) 테스트 시나리오</div>
+
+  <div class="demo-desc">
+    임시로 확인할 수 있도록<br />
+    예시 테스트 시나리오 엑셀 파일을 적용합니다.
+  </div>
+
+  <div class="demo-file-box">
+  <a href="assets/sample_test_scenario.xlsx" download>
+  sample_test_scenario.xlsx 다운로드</a>
+  </div>
+</div>
+
+    </div>
+
+  </div>
   </main>
 
   <footer>
@@ -885,5 +981,3 @@ document.querySelectorAll(".step-card-header").forEach(header => {
 
 </body>
 </html>
-
-
